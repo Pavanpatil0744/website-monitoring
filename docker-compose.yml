@@ -1,0 +1,48 @@
+version: "2"
+
+networks:
+  net:
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    tty: true
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    networks:
+      - net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana
+    environment:
+      - GF_AUTH_PROXY_ENABLED=true
+      - GF_PATHS_PROVISIONING=/var/lib/grafana/provisioning/
+    volumes:
+      - ./provisioning/:/var/lib/grafana/provisioning/
+      - ./grafana.ini:/etc/grafana/grafana.ini
+    ports:
+      - 3000:3000
+    networks:
+      - net
+    depends_on:
+      - prometheus
+
+  blackbox_exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox_exporter
+    hostname: blackbox_exporter
+    restart: always
+    tty: true
+    ports:
+      - 9115:9115
+    networks:
+      - net
+    volumes:
+      - ./blackbox.yml:/etc/blackbox_exporter/config.yml  # Mounting the blackbox.yml file
